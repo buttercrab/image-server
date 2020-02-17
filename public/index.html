@@ -153,6 +153,7 @@
         }
 
         function sendResult(res) {
+            loading = true;
             http("POST", "/res/", JSON.stringify({
                 id: imgID,
                 value: res,
@@ -237,7 +238,7 @@
     <div class="register-wrap center">
         <div class="register-title">Register</div>
         <div class="register-content">여러분의 이름과 비밀 코드(비밀번호가 아닙니다!!)를 적어주세요.<br/>여러분임을 증명할 수 있는 코드입니다.<br/>아이디별로 똑같아야 합니다.<br/>처음에
-            적은 것이 저장되고 매번 확인됩니다.<br/>비어있으면 익명으로 시작합니다.
+            적은 것이 저장되고 매번 확인됩니다.<br/>비어있으면 익명으로 시작합니다.<br/>만약 사진이 역광 사진이면 오른쪽, 아니면 왼쪽을 눌러주세요.
         </div>
         <div class="register-subtitle">Name</div>
         <input class="register-input" id="name">
