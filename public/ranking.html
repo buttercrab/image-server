@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ranking</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300&display=swap" rel="stylesheet">
+    <style>
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            text-align: center;
+            width: 100%;
+            height: 50px;
+            background: #232323;
+            color: #DDDDDD;
+            font-size: 25px;
+        }
+
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            text-align: center;
+            width: 100%;
+            height: 50px;
+            background: #232323;
+            color: #DDDDDD;
+            font-size: 20px;
+        }
+
+        .center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .table-wrap {
+            position: absolute;
+            width: 100%;
+            height: calc(100% - 100px);
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            margin: 50px 0;
+            padding: 0;
+            overflow-y: scroll;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+    </style>
+    <script>
+        function http(method, theUrl, content, callback) {
+            let xmlHttp = new XMLHttpRequest();
+            xmlHttp.onreadystatechange = function () {
+                if (xmlHttp.readyState === 4 && xmlHttp.status === 200)
+                    callback(xmlHttp.responseText);
+            };
+            xmlHttp.open(method, theUrl, true);
+            xmlHttp.send(content);
+        }
+
+        function loadRanking() {
+            http("GET", "/ranking_info", null, value => {
+                let obj = JSON.parse(value);
+
+                let ranking = [];
+                for (let key in obj) {
+                    if (obj.hasOwnProperty(key)) {
+                        ranking.push([key, obj[key]]);
+                    }
+                }
+
+                ranking.sort((a, b) => {
+                    if (a[1] === b[1])
+                        return a[0] < b[0] ? -1 : (a[0] > b[0] ? 1 : 0);
+                    return a[1] < b[1] ? 1 : -1;
+                });
+
+                let html = "";
+
+                let cnt = 1, last = 0;
+                for (let i = 0; i < ranking.length; i++) {
+                    if (ranking[last][1] !== ranking[i][1])
+                        cnt = i + 1;
+                    last = i;
+                    html += "<tr>";
+                    html += "   <th scope='row'>" + cnt + "</td>";
+                    html += "   <td>" + ranking[i][0] + "</td>";
+                    html += "   <td>" + ranking[i][1] + "</td>";
+                    html += "</tr>";
+                }
+
+                document.getElementById("main").innerHTML = html;
+            });
+        }
+    </script>
+</head>
+<body onload="loadRanking()">
+<div class="top-bar">
+    <div class="center">Backlight Image Ranking</div>
+
+</div>
+<div class="table-wrap">
+    <table class="table table-striped table-bordered">
+        <thead class="thead-dark">
+        <tr>
+            <th scope="col">rank</th>
+            <th scope="col">name</th>
+            <th scope="col">score</th>
+        </tr>
+        </thead>
+        <tbody id="main">
+        </tbody>
+    </table>
+</div>
+<div class="bottom-bar">
+    <div class="center">
+        GSHS | <a target="_blank" rel="noopener noreferrer" href="/" style="color: aqua">Main</a> | Thank you!
+    </div>
+</div>
+</body>
+</html>

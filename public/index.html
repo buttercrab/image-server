@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Backlight</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,700&display=swap" rel="stylesheet">
+    <style>
+        .image-wrap {
+            position: absolute;
+            width: calc(100% - 100px);
+            height: calc(100% - 100px);
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            margin: 50px;
+            padding: 0;
+        }
+
+        #image {
+            max-height: calc(100% - 50px);
+            max-width: 100%;
+            width: 100%;
+            height: auto;
+            margin: auto;
+            object-fit: contain;
+        }
+
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            text-align: center;
+            width: 100%;
+            height: 50px;
+            background: #232323;
+            color: #DDDDDD;
+            font-size: 25px;
+        }
+
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            text-align: center;
+            width: 100%;
+            height: 50px;
+            background: #232323;
+            color: #DDDDDD;
+            font-size: 20px;
+        }
+
+        .center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .register-background {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            opacity: 0.5;
+            margin: 0;
+            left: 0;
+            top: 0;
+            filter: blur(8px);
+        }
+
+        .register-wrap {
+            position: fixed;
+            height: 90%;
+            width: 90%;
+            max-height: 460px;
+            max-width: 460px;
+            background: #f0f0f0;
+            color: #232323;
+            border-radius: 20px;
+            box-shadow: 0 0 3px -1px #232323;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .register-title {
+            font-size: 50px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .register-content {
+            margin: 20px 0;
+        }
+
+        .register-subtitle {
+            margin-top: 20px;
+            font-size: 20px;
+        }
+
+        .register-input {
+            width: 460px;
+            height: 23px;
+            box-shadow: none;
+            outline: none;
+            font-size: 15px;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .register-button {
+            width: 460px;
+            background: #7785d7;
+            height: 30px;
+            text-align: center;
+            margin-top: 30px;
+            font-size: 22px;
+            cursor: pointer;
+        }
+
+        .register-error {
+            color: #d74f51;
+            font-size: 15px;
+        }
+
+        body {
+            background: #121212;
+            font-family: 'Roboto', sans-serif;
+        }
+    </style>
+    <script>
+        let imgID, imgSRC;
+        let name = "anonymous";
+        let loading = true;
+
+        function http(method, theUrl, content, callback) {
+            let xmlHttp = new XMLHttpRequest();
+            xmlHttp.onreadystatechange = function () {
+                if (xmlHttp.readyState === 4 && xmlHttp.status === 200)
+                    callback(xmlHttp.responseText);
+            };
+            xmlHttp.open(method, theUrl, true);
+            xmlHttp.send(content);
+        }
+
+        function loadImage() {
+            loading = true;
+            http("GET", "/img", null, value => {
+                let res = JSON.parse(value);
+                imgID = res.id;
+                imgSRC = res.url;
+                document.getElementById("image").src = imgSRC;
+            });
+        }
+
+        function sendResult(res) {
+            http("POST", "/res/", JSON.stringify({
+                id: imgID,
+                value: res,
+                name: name,
+            }), _ => {
+                loadImage();
+            });
+        }
+
+        function imageClick(e) {
+            if (loading === true) return;
+            let x = e.pageX;
+
+            if (x < window.innerWidth / 2 - 50) sendResult(-1);
+            if (x > window.innerWidth / 2 + 50) sendResult(1);
+        }
+
+        function init() {
+            document.getElementById("image").addEventListener("click", imageClick, true);
+            document.getElementById("image").onload = () => {
+                loading = false;
+            };
+            loadImage();
+        }
+
+        function register(name, secret, callback) {
+            http("POST", "/register/", JSON.stringify({
+                name: name,
+                secret: secret,
+            }), value => {
+                if (value === "true") {
+                    callback(true);
+                } else {
+                    callback(false);
+                }
+            });
+        }
+
+        function registerClick() {
+            document.getElementsByClassName("register-button")[0].innerHTML = "checking...";
+            let _name = document.getElementById("name").value;
+            let _secret = document.getElementById("secret").value;
+            if (_name === "") {
+                closeRegister();
+                return;
+            }
+            register(_name, _secret, value => {
+                if (value) {
+                    name = _name;
+                    closeRegister();
+                } else {
+                    putError("전에 입력한 비밀 코드가 다르네요");
+                }
+            })
+        }
+
+        function closeRegister() {
+            document.getElementById("register-whole-wrap").innerHTML = "";
+            loading = false;
+        }
+
+        function putError(err) {
+            document.getElementsByClassName("register-button")[0].innerHTML = "check";
+            document.getElementsByClassName("register-error")[0].innerHTML = err;
+        }
+    </script>
+</head>
+<body onload="init()">
+<div class="top-bar">
+    <div class="center">Backlight Image</div>
+</div>
+<div class="image-wrap">
+    <img id="image" alt="No Image" class="center">
+</div>
+<div class="bottom-bar">
+    <div class="center">
+        GSHS | <a target="_blank" rel="noopener noreferrer" href="/ranking" style="color: aqua">Ranking</a> | Thank you!
+    </div>
+</div>
+<div id="register-whole-wrap">
+    <div class="register-background"></div>
+    <div class="register-wrap center">
+        <div class="register-title">Register</div>
+        <div class="register-content">여러분의 이름과 비밀 코드(비밀번호가 아닙니다!!)를 적어주세요.<br/>여러분임을 증명할 수 있는 코드입니다.<br/>아이디별로 똑같아야 합니다.<br/>처음에
+            적은 것이 저장되고 매번 확인됩니다.<br/>비어있으면 익명으로 시작합니다.
+        </div>
+        <div class="register-subtitle">Name</div>
+        <input class="register-input" id="name">
+        <div class="register-subtitle">Secret Code</div>
+        <input class="register-input" id="secret">
+        <div class="register-button" onclick="registerClick()">check</div>
+        <div class="register-error"></div>
+    </div>
+</div>
+</body>
+</html>
