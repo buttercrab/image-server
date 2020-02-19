@@ -1,5 +1,12 @@
 package main
 
+import (
+	"sync"
+)
+
+var popLock sync.Mutex
+var pushLock sync.Mutex
+
 type QueueNode struct {
 	value int
 	next  *QueueNode
@@ -12,6 +19,8 @@ type Queue struct {
 }
 
 func (q *Queue) Push(x int) {
+	pushLock.Lock()
+	defer pushLock.Unlock()
 	next := QueueNode{
 		value: x,
 		next:  nil,
@@ -29,6 +38,8 @@ func (q *Queue) Push(x int) {
 
 // assert len > 0 in this project
 func (q *Queue) Pop() int {
+	popLock.Lock()
+	defer popLock.Unlock()
 	x := q.head.value
 	q.head = q.head.next
 	q.len--

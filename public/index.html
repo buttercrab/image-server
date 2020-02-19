@@ -173,6 +173,13 @@
 
         function init() {
             document.getElementById("image").addEventListener("click", imageClick, true);
+            document.onkeydown = function(e) {
+                if(loading === true) return;
+                if(e.keyCode === 37)
+                    sendResult(-1);
+                if(e.keyCode === 39)
+                    sendResult(1);
+            };
             document.getElementById("image").onload = () => {
                 loading = false;
             };

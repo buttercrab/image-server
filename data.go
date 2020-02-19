@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -42,6 +43,14 @@ func (h *IntHeap) Pop() interface{} {
 	*h = old[0 : n-1]
 	location[element] = -1
 	return element
+}
+
+var heapLock sync.Mutex
+
+func heapFix(intHeap *IntHeap, v int) {
+	heapLock.Lock()
+	defer heapLock.Unlock()
+	heap.Fix(intHeap, v)
 }
 
 var list []string
@@ -89,23 +98,33 @@ func Init() {
 	}
 	q = Queue{len: 0, head: nil, tail: nil}
 
-	rank["Hello"] = 1
-	rank["World"] = 2
-	rank["BABA"] = 1
-	rank["sss"] = 0
-	rank["sssa"] = 0
-	rank["sssb"] = 0
-	rank["sssc"] = 0
-	rank["sssd"] = 0
-	rank["ssse"] = 0
-	rank["sssf"] = 0
-	rank["sssg"] = 0
-	rank["sssh"] = 0
-	rank["sssi"] = 0
-	rank["sssj"] = 0
-	rank["sssk"] = 0
-	rank["sssl"] = 0
-	rank["sssm"] = 0
+	file, err = os.Open("data/output.txt")
+	if err != nil {
+		panic(err)
+		return
+	}
+	defer file.Close()
+
+	for i := 0; i < cnt; i++ {
+		_, _ = fmt.Fscanf(file, "%d %d", rightCount[i], wrongCount[i])
+	}
+
+	file, err = os.Open("data/ranking.txt")
+	if err != nil {
+		panic(err)
+		return
+	}
+	defer file.Close()
+
+	scanner = bufio.NewScanner(file)
+	for scanner.Scan() {
+		a, b, c := "", "", 0
+		_, _ = fmt.Sscanf(scanner.Text(), "%s %s %d", &a, &b, &c)
+		rank[a] = c
+		rankSecret[a] = b
+	}
+
+	heap.Init(&pq)
 }
 
 // in goroutine
@@ -116,7 +135,7 @@ func Update() {
 			timeToPop[x] = timeToPop[x].Add(time.Minute * 10)
 			time.Sleep(time.Until(timeToPop[x]))
 			tempCount[x]--
-			heap.Fix(&pq, location[x])
+			heapFix(&pq, location[x])
 		}
 	}
 }
@@ -126,7 +145,7 @@ func GetNew() (int, string) {
 	tempCount[x]++
 	timeToPop[x] = time.Now()
 	q.Push(x)
-	heap.Fix(&pq, location[x])
+	heapFix(&pq, location[x])
 	return x, list[x]
 }
 
@@ -142,7 +161,7 @@ func SetValue(id, value int, name string) {
 	} else {
 		wrongCount[id]++
 	}
-	heap.Fix(&pq, location[id])
+	heapFix(&pq, location[id])
 }
 
 func saveResult() {
